@@ -1,49 +1,74 @@
-class MalType {}
-
-class MalList extends MalType {
-  constructor(list) {
-    super();
-    this.value = list;
+class MalValue {
+  #value;
+  constructor(value) {
+    this.#value = value;
   }
 
   pr_str() {
-    return "(" + this.value.map(pr_str).join(" ") + ")";
+    return this.#value.toString();
   }
 }
 
-class MalVector extends MalType {
-  constructor(list) {
+class MalVector extends MalValue {
+  #value;
+  constructor(value) {
     super();
-    this.value = list;
+    this.#value = value;
   }
 
   pr_str() {
-    return "[" + this.value.map(pr_str).join(" ") + "]";
+    return "[" + this.#value.map(toString).join(" ") + "]";
   }
 }
 
-class MalSymbol extends MalType {
+class MalList extends MalValue {
+  #value;
+  constructor(value) {
+    super();
+    this.#value = value;
+  }
+
+  pr_str() {
+    return "(" + this.#value.map(toString).join(" ") + ")";
+  }
+}
+
+class MalHashmap extends MalValue {
+  #value
+  constructor(value) {
+    super();
+    this.#value = value;
+  }
+
+  pr_str() {
+    return "{" + this.#value.map(toString).join(" ") + "}";
+  }
+}
+
+class MalKeyword extends MalValue {
+  #keyword;
+  constructor(keyword) {
+    super();
+    this.#keyword = keyword;
+  }
+
+  pr_str() {
+    return ':' + this.#keyword;
+  }
+}
+
+class MalSymbol extends MalValue {
+  #symbol
   constructor(symbol) {
     super();
-    this.value = symbol;
+    this.#symbol = symbol;
   }
 
   pr_str() {
-    return this.value.toString();
+    return this.#symbol;
   }
 }
 
-class MalNil extends MalType {
-  constructor() {
-    super();
-    this.value = null;
-  }
+const toString = (x) => (x instanceof MalValue ? x.pr_str() : x);
 
-  pr_str() {
-    return "nil";
-  }
-}
-
-const pr_str = ast => (ast instanceof MalType ? ast.pr_str() : ast.toString());
-
-module.exports = { MalList, MalSymbol, MalNil, MalType, MalVector, pr_str };
+module.exports = {MalValue, MalList, MalVector, MalHashmap, MalKeyword, MalSymbol};
