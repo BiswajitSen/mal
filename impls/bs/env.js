@@ -2,9 +2,19 @@ class Env {
   #data;
   #outer;
 
-  constructor(outer = null) {
+  constructor(outer = null, data = new Map()) {
     this.#outer = outer;
-    this.#data = new Map();
+    this.#data = data;
+  }
+
+  static create(outer = null, binds, exprs) {
+    const data = new Map();
+    if (binds && exprs) {
+      for (let i = 0; i < binds.length; i++) {
+        data.set(binds[i].value, exprs[i]);
+      }
+    }
+    return new Env(outer, data);
   }
 
   set(key, value) {

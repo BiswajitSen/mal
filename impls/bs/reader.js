@@ -69,6 +69,8 @@ const read_atom = (reader) => {
       return true;
     case token === "false":
       return false;
+    case token === "nil":
+      return null;
     case token.startsWith(":"):
       return new MalKeyword(token.slice(1));
     case token.match(/^"(?:\\.|[^\\"])*"$/):
