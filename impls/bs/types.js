@@ -1,18 +1,18 @@
 class MalValue {
-  #value;
+  value;
   constructor(value) {
-    this.#value = value;
+    this.value = value;
   }
 
   pr_str() {
-    return this.#value.toString();
+    return this.value.toString();
   }
 }
 
-class MalVector extends MalValue {
+  class MalVector extends MalValue {
   #value;
   constructor(value) {
-    super();
+    super(value);
     this.#value = value;
   }
 
@@ -24,7 +24,7 @@ class MalVector extends MalValue {
 class MalList extends MalValue {
   #value;
   constructor(value) {
-    super();
+    super(value);
     this.#value = value;
   }
 
@@ -36,7 +36,7 @@ class MalList extends MalValue {
 class MalHashmap extends MalValue {
   #value
   constructor(value) {
-    super();
+    super(value);
     this.#value = value;
   }
 
@@ -48,7 +48,7 @@ class MalHashmap extends MalValue {
 class MalKeyword extends MalValue {
   #keyword;
   constructor(keyword) {
-    super();
+    super(keyword);
     this.#keyword = keyword;
   }
 
@@ -60,7 +60,7 @@ class MalKeyword extends MalValue {
 class MalSymbol extends MalValue {
   #symbol
   constructor(symbol) {
-    super();
+    super(symbol);
     this.#symbol = symbol;
   }
 

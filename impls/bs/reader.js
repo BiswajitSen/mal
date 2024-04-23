@@ -63,8 +63,8 @@ const read_splice_unquote = (reader) => {
 const read_atom = (reader) => {
   const token = reader.next();
   switch (true) {
-    case token.match(/^[+-]?[0-9]+$/):
-      return new Number(token).valueOf();
+    case !!token.match(/^[+-]?[0-9]+$/):
+      return new Number(token);
     case token === "true":
       return true;
     case token === "false":
