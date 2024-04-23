@@ -64,7 +64,7 @@ const read_atom = (reader) => {
   const token = reader.next();
   switch (true) {
     case !!token.match(/^[+-]?[0-9]+$/):
-      return new Number(token);
+      return Number(token);
     case token === "true":
       return true;
     case token === "false":
@@ -129,7 +129,7 @@ const read_form = (reader) => {
 const read_seq = (reader, closingSymbol) => {
   const ast = [];
 
-  while (reader.peek() != closingSymbol) {
+  while (reader.peek() !== closingSymbol) {
     if (reader.peek() === undefined) {
       throw new Error("unbalanced");
     }
@@ -151,4 +151,4 @@ const read_str = (str) => {
   return read_form(reader);
 };
 
-module.exports = { read_str };
+module.exports = {read_str};
