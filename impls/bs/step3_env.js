@@ -15,12 +15,8 @@ const eval_ast = (ast, env) => {
   switch (true) {
     case ast instanceof MalList:
       return ast.value.map((token) => EVAL(token, env));
-    case ast instanceof MalSymbol: {
-      const symbolBinding = env.get(ast) || ast.value;
-
-      if (symbolBinding) return symbolBinding;
-      throw new Error("no value is found");
-    }
+    case ast instanceof MalSymbol:
+      return env.get(ast);
     case ast instanceof MalVector:
       return new MalVector(ast.value.map((token) => EVAL(token, env)));
 
@@ -44,18 +40,19 @@ const EVAL = (ast, env) => {
     const let_env = new Env(env);
     const bindings = ast.value[1].value;
     for (let i = 0; i < bindings.length; i += 2) {
-      let_env.set(bindings[i].value, EVAL(bindings[i + 1], env));
+      let_env.set(bindings[i].value, EVAL(bindings[i + 1], let_env));
     }
 
     return EVAL(ast.value[2], let_env);
   }
 
-  const [fn, ...args] = eval_ast(ast, env);
-
-  if (fn === 'def!') {
-    env.set(args[0], args[1]);
-    return args[1];
+  if (ast.value[0].value === 'def!') {
+    const val = EVAL(ast.value[2], env);
+    env.set(ast.value[1].value, val);
+    return val;
   }
+
+  const [fn, ...args] = eval_ast(ast, env);
 
   if (fn instanceof Function) {
     return fn.apply(null, args);
