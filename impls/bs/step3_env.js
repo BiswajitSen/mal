@@ -40,13 +40,23 @@ const EVAL = (ast, env) => {
     return ast;
   }
 
+  if (ast.value[0].value === 'let*') {
+    const let_env = new Env(env);
+    const bindings = ast.value[1].value;
+    for (let i = 0; i < bindings.length; i += 2) {
+      let_env.set(bindings[i].value, EVAL(bindings[i + 1], env));
+    }
+
+    return EVAL(ast.value[2], let_env);
+  }
+
   const [fn, ...args] = eval_ast(ast, env);
 
   if (fn === 'def!') {
     env.set(args[0], args[1]);
     return args[1];
   }
-  
+
   if (fn instanceof Function) {
     return fn.apply(null, args);
   }

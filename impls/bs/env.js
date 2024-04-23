@@ -4,7 +4,7 @@ class Env {
 
   constructor(outer = null) {
     this.#outer = outer;
-    this.#data = new Map()
+    this.#data = new Map();
   }
 
   set(key, value) {
@@ -16,12 +16,11 @@ class Env {
       return this.#data;
     }
 
-    if (this.#outer !== null && this.#outer.has(key)) return this.#outer;
+    if (this.#outer !== null && !!this.#outer.find(key)) return this.#outer.#data;
   }
 
   get(key) {
     const env = this.find(key.value);
-
     if (env) return env.get(key.value);
   }
 
