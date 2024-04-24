@@ -1,4 +1,6 @@
 const {Env} = require('./env');
+const ns = require('./core');
+
 
 const readline = require("node:readline");
 const {stdin: input, stdout: output} = require("node:process");
@@ -26,6 +28,44 @@ const eval_ast = (ast, env) => {
   }
 };
 
+const handleLet = (ast, env) => {
+  const let_env = new Env(env);
+  const bindings = ast.value[1].value;
+  for (let i = 0; i < bindings.length; i += 2) {
+    let_env.set(bindings[i].value, EVAL(bindings[i + 1], let_env));
+  }
+
+  return EVAL(ast.value[2], let_env);
+}
+
+const handleDef = (ast, env) => {
+  const val = EVAL(ast.value[2], env);
+  env.set(ast.value[1].value, val);
+  return val;
+}
+
+const handleIf = (ast, env) => {
+  const expr = EVAL(ast.value[1], env);
+
+  if (expr === null || expr === false) {
+    return EVAL(ast.value[3], env);
+  }
+  return EVAL(ast.value[2], env);
+}
+
+const handleDo = (ast, env) => {
+  const [_, ...exprs] = ast.value;
+  const [result] = exprs.map((form) => EVAL(form, env)).slice(-1);
+  return result;
+}
+
+const handleFn = (ast, env) => {
+  return (...args) => {
+    const localEnv = Env.create(env, ast.value[1].value, [...args]);
+    return EVAL(ast.value[2], localEnv);
+  };
+}
+
 const EVAL = (ast, env) => {
   if (!(ast instanceof MalList)) {
     return eval_ast(ast, env);
@@ -35,48 +75,23 @@ const EVAL = (ast, env) => {
     return ast;
   }
 
-  if (ast.value[0].value === 'let*') {
-    const let_env = new Env(env);
-    const bindings = ast.value[1].value;
-    for (let i = 0; i < bindings.length; i += 2) {
-      let_env.set(bindings[i].value, EVAL(bindings[i + 1], let_env));
+  const firstValue = ast.value[0].value;
+  switch (firstValue) {
+    case 'let*':
+      return handleLet(ast, env);
+    case 'def!':
+      return handleDef(ast, env);
+    case "if":
+      return handleIf(ast, env);
+    case "do":
+      return handleDo(ast, env);
+    case "fn*":
+      return handleFn(ast, env);
+    default: {
+      const [fn, ...args] = eval_ast(ast, env);
+      if (fn instanceof Function)
+        return fn.apply(null, args);
     }
-
-    return EVAL(ast.value[2], let_env);
-  }
-
-  if (ast.value[0].value === 'def!') {
-    const val = EVAL(ast.value[2], env);
-    env.set(ast.value[1].value, val);
-    return val;
-  }
-
-  if (ast.value[0].value === "if") {
-    const expr = EVAL(ast.value[1], env);
-
-    if (expr === null || expr === false) {
-      return EVAL(ast.value[3], env);
-    }
-    return EVAL(ast.value[2], env);
-  }
-
-  if (ast.value[0].value === "do") {
-    const [_, ...exprs] = ast.value;
-    const [result] = exprs.map((form) => EVAL(form, env)).slice(-1);
-    return result;
-  }
-
-  if (ast.value[0].value === "fn*") {
-    return (...args) => {
-      const localEnv = Env.create(env, ast.value[1].value, [...args]);
-      return EVAL(ast.value[2], localEnv);
-    };
-  }
-
-  const [fn, ...args] = eval_ast(ast, env);
-
-  if (fn instanceof Function) {
-    return fn.apply(null, args);
   }
 };
 
@@ -86,11 +101,7 @@ const rep = (str, env) => PRINT(EVAL(READ(str), env));
 
 const instantiateEnv = () => {
   const repl_env = new Env();
-  repl_env.set('+', (a, b) => a + b);
-  repl_env.set('-', (a, b) => a - b);
-  repl_env.set('*', (a, b) => a * b);
-  repl_env.set('/', (a, b) => a / b);
-
+  Object.entries(ns).forEach(([k, v]) => repl_env.set(k, v));
   return repl_env;
 }
 const env = instantiateEnv();
