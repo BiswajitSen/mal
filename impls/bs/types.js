@@ -135,6 +135,23 @@ class MalNil extends MalValue {
   }
 }
 
+class MalFunction extends MalValue {
+  env;
+  binds;
+  fnBody;
+
+  constructor(binds, fnBody, env) {
+    super();
+    this.binds = binds;
+    this.fnBody = fnBody;
+    this.env = env;
+  }
+
+  pr_str(print_readably = false) {
+    return "#<function>";
+  }
+}
+
 const isEql = (a, b) => {
   if ((a instanceof MalValue) && (b instanceof MalValue)) {
     return a.isEql(b);
@@ -154,6 +171,7 @@ module.exports = {
   MalSymbol,
   MalString,
   MalNil,
+  MalFunction,
   isEql,
   getCount
 };
