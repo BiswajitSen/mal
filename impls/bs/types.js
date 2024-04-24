@@ -24,7 +24,7 @@ class MalSequence extends MalValue {
 
   pr_seq(print_readably = false, brackets = ['(', ')']) {
     const [opening, closing] = brackets;
-    return opening + this.value.map(x => pr_str(x, print_readably)).join(" ") + closing;
+    return opening + this.value.map(toString).join(" ") + closing;
   }
 
   count() {
@@ -56,8 +56,8 @@ class MalList extends MalSequence {
     super(value);
   }
 
-  pr_str() {
-    return "(" + this.value.map(toString).join(" ") + ")";
+  pr_str(print_readably = false) {
+    return this.pr_seq(print_readably);
   }
 }
 
@@ -66,19 +66,19 @@ class MalVector extends MalSequence {
     super(value);
   }
 
-  pr_str() {
-    return "[" + this.value.map(toString).join(" ") + "]";
+  pr_str(print_readably = false) {
+    return this.pr_seq(print_readably);
   }
 }
 
-class MalHashmap extends MalValue {
+class MalHashmap extends MalSequence {
 
   constructor(value) {
     super(value);
   }
 
-  pr_str() {
-    return "{" + this.value.map(toString).join(" ") + "}";
+  pr_str(print_readably) {
+    return this.pr_seq(print_readably);
   }
 }
 
