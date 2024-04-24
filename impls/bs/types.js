@@ -18,18 +18,17 @@ class MalValue {
 }
 
 class MalSequence extends MalValue {
-  constructor(ast) {
-    super(ast);
-    this.ast = ast;
+  constructor(sequence) {
+    super(sequence);
   }
 
   pr_seq(print_readably = false, brackets = ['(', ')']) {
     const [opening, closing] = brackets;
-    return opening + this.ast.map(x => pr_str(x, print_readably)).join(" ") + closing;
+    return opening + this.value.map(x => pr_str(x, print_readably)).join(" ") + closing;
   }
 
   count() {
-    return this.ast.length;
+    return this.value.length;
   }
 
   isEql(other) {
@@ -42,7 +41,7 @@ class MalSequence extends MalValue {
     }
 
     for (let i = 0; i < this.count(); i++) {
-      if (!isEql(this.ast[i], other.ast[i])) {
+      if (!isEql(this.value[i], other.value[i])) {
         return false;
       }
     }
@@ -52,41 +51,34 @@ class MalSequence extends MalValue {
 }
 
 class MalList extends MalSequence {
-  #value;
 
   constructor(value) {
     super(value);
-    this.#value = value;
   }
 
   pr_str() {
-    return "(" + this.#value.map(toString).join(" ") + ")";
+    return "(" + this.value.map(toString).join(" ") + ")";
   }
 }
 
 class MalVector extends MalSequence {
-  #value;
-
   constructor(value) {
     super(value);
-    this.#value = value;
   }
 
   pr_str() {
-    return "[" + this.#value.map(toString).join(" ") + "]";
+    return "[" + this.value.map(toString).join(" ") + "]";
   }
 }
 
 class MalHashmap extends MalValue {
-  #value
 
   constructor(value) {
     super(value);
-    this.#value = value;
   }
 
   pr_str() {
-    return "{" + this.#value.map(toString).join(" ") + "}";
+    return "{" + this.value.map(toString).join(" ") + "}";
   }
 }
 
@@ -104,34 +96,42 @@ class MalKeyword extends MalValue {
 }
 
 class MalSymbol extends MalValue {
-  #symbol
-
   constructor(symbol) {
     super(symbol);
-    this.#symbol = symbol;
   }
 
   pr_str() {
-    return this.#symbol;
+    return this.value;
   }
 }
 
 class MalString extends MalValue {
-  #string
-
   constructor(string) {
     super(string);
-    this.#string = string;
   }
 
   pr_str(print_readably) {
     if (print_readably) {
-      return '"' + this.#string
+      return '"' + this.value
         .replace(/\\/g, "\\\\")
         .replace(/"/g, '\\"')
         .replace(/\n/g, "\\n") + '"';
     }
-    return this.#string;
+    return this.value;
+  }
+}
+
+class MalNil extends MalValue {
+  constructor() {
+    super(false);
+  }
+
+  count() {
+    return 0;
+  }
+
+  pr_str() {
+    return "nil";
   }
 }
 
@@ -142,6 +142,18 @@ const isEql = (a, b) => {
   return _.isEqual(a, b);
 }
 
+const getCount = (x) => (x instanceof MalValue) ? x.count() : (x && x.length || 0);
 const toString = (x) => (x instanceof MalValue ? x.pr_str() : x);
 
-module.exports = {MalValue, MalList, MalVector, MalHashmap, MalKeyword, MalSymbol, MalString, isEql};
+module.exports = {
+  MalValue,
+  MalList,
+  MalVector,
+  MalHashmap,
+  MalKeyword,
+  MalSymbol,
+  MalString,
+  MalNil,
+  isEql,
+  getCount
+};
