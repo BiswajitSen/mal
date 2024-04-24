@@ -50,7 +50,7 @@ const EVAL = (ast, env) => {
     env.set(ast.value[1].value, val);
     return val;
   }
-  
+
   if (ast.value[0].value === "if") {
     const expr = EVAL(ast.value[1], env);
 
@@ -58,6 +58,12 @@ const EVAL = (ast, env) => {
       return EVAL(ast.value[3], env);
     }
     return EVAL(ast.value[2], env);
+  }
+
+  if (ast.value[0].value === "do") {
+    const [_, ...exprs] = ast.value;
+    const [result] = exprs.map((form) => EVAL(form, env)).slice(-1);
+    return result;
   }
 
   if (ast.value[0].value === "fn*") {
