@@ -1,10 +1,8 @@
 const {Env} = require('./env');
 const ns = require('./core');
-
-
 const readline = require("node:readline");
-const {stdin: input, stdout: output} = require("node:process");
 
+const {stdin: input, stdout: output} = require("node:process");
 const printer = require("./printer");
 const {read_str} = require("./reader");
 const {MalSymbol, MalList, MalVector, MalHashmap, MalValue} = require("./types");
@@ -48,7 +46,8 @@ const handleIf = (ast, env) => {
   const expr = EVAL(ast.value[1], env);
 
   if (expr === null || expr === false) {
-    return EVAL(ast.value[3], env);
+    const result = EVAL(ast.value[3], env);
+    return result === undefined ? 'nil' : result;
   }
   return EVAL(ast.value[2], env);
 }
@@ -61,7 +60,7 @@ const handleDo = (ast, env) => {
 
 const handleFn = (ast, env) => {
   return (...args) => {
-    const localEnv = Env.create(env, ast.value[1].value, [...args]);
+    const localEnv = Env.create(env, ast.value[1].value, args);
     return EVAL(ast.value[2], localEnv);
   };
 }

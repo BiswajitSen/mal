@@ -3,7 +3,7 @@ const {
   MalVector,
   MalHashmap,
   MalKeyword,
-  MalSymbol,
+  MalSymbol, MalString,
 } = require("./types");
 
 class Reader {
@@ -73,11 +73,9 @@ const read_atom = (reader) => {
       return null;
     case token.startsWith(":"):
       return new MalKeyword(token.slice(1));
-    case token.match(/^"(?:\\.|[^\\"])*"$/):
-      const str = token
-        .slice(1, token.length - 1)
-        .replace(/\\(.)/g, (_, c) => (c === "n" ? "\n" : c));
-      return new Str(str);
+    case (token.startsWith('"')): {
+      return new MalString(token);
+    }
     default:
       return new MalSymbol(token);
   }

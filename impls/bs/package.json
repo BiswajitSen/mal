@@ -1,0 +1,14 @@
+{
+  "name": "bs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "author": "Biswajit Sen",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}

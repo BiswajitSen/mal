@@ -7,13 +7,17 @@ class Env {
     this.#data = data;
   }
 
-  static create(outer = null, binds, exprs) {
+  static create(outer = null, binds = [], exprs = []) {
     const data = new Map();
+    let i = 0;
     if (binds && exprs) {
-      for (let i = 0; i < binds.length; i++) {
+      while (i < binds.length) {
+        if (binds[i].value === '&') break;
         data.set(binds[i].value, exprs[i]);
+        i++;
       }
     }
+    if (i < binds.length) data.set(binds[i + 1].value, exprs.slice(i));
     return new Env(outer, data);
   }
 
