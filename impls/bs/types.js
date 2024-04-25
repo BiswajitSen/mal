@@ -67,7 +67,7 @@ class MalVector extends MalSequence {
   }
 
   pr_str(print_readably = false) {
-    return this.pr_seq(print_readably);
+    return this.pr_seq(print_readably, ['[', ']']);
   }
 }
 
@@ -78,7 +78,7 @@ class MalHashmap extends MalSequence {
   }
 
   pr_str(print_readably) {
-    return this.pr_seq(print_readably);
+    return this.pr_seq(print_readably, ['{', '}']);
   }
 }
 

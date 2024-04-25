@@ -1,4 +1,4 @@
-const {MalValue} = require("./types");
+const {MalValue, MalNil} = require("./types");
 
 const pr_str = (exp, print_readably = false) => {
   switch (true) {
@@ -6,8 +6,6 @@ const pr_str = (exp, print_readably = false) => {
       return exp.pr_str(print_readably);
     case exp instanceof Function :
       return "#<function>";
-    case exp === null:
-      return 'nil';
     default:
       return exp;
   }

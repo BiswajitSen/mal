@@ -1,6 +1,8 @@
 const _ = require('lodash');
 const {pr_str} = require("./printer");
-const {MalList, MalValue, isEql, getCount} = require("./types");
+const {MalList, MalValue, isEql, getCount, MalNil} = require("./types");
+const {read_str} = require("./reader");
+const {readFileSync} = require("fs");
 
 const ns = {
   '+': (a, b) => a + b,
@@ -25,14 +27,17 @@ const ns = {
   'prn': (...args) => {
     const output = args.map(x => x.value ? x.value : x).join(' ');
     console.log(output);
-    return null;
+    return 'nil';
   },
   'println': (...args) => {
     const str = args.map(x => pr_str(x)).join(" ");
     console.log(str);
     return null;
   },
-  'str': (x) => pr_str(x),
+  'str': (...x) => {
+    const output = x.map(a => a.value).join("")
+    return output || `""`;
+  },
   'pr-str': (...x) => {
     const output = [];
     x.forEach(token => {
@@ -41,7 +46,17 @@ const ns = {
 
     return output.join(' ') || '""';
   },
-  'not': (x) => (x === 0) ? false : !x,
+  'not': (x) => {
+    if (x instanceof MalNil) return true;
+    return (x === 0) ? false : !x
+  },
+  'read-string': (x) => {
+    console.log(x.value);
+    read_str(x.value)
+  },
+  'slurp': (fileName) => {
+    return readFileSync(fileName, {encoding: "utf-8"})
+  }
 };
 
 module.exports = ns;

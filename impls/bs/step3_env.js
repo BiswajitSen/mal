@@ -65,7 +65,6 @@ const rep = (str, env) => PRINT(EVAL(READ(str), env));
 
 const instantiateEnv = () => {
   const repl_env = new Env();
-  const [] = Object.entries(ns);
   repl_env.set('+', (a, b) => a + b);
   repl_env.set('-', (a, b) => a - b);
   repl_env.set('*', (a, b) => a * b);

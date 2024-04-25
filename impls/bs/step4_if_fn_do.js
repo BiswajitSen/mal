@@ -5,7 +5,7 @@ const readline = require("node:readline");
 const {stdin: input, stdout: output} = require("node:process");
 const printer = require("./printer");
 const {read_str} = require("./reader");
-const {MalSymbol, MalList, MalVector, MalHashmap, MalValue} = require("./types");
+const {MalSymbol, MalList, MalVector, MalHashmap, MalValue, MalNil} = require("./types");
 
 const rl = readline.createInterface({input, output});
 
@@ -45,7 +45,8 @@ const handleDef = (ast, env) => {
 const handleIf = (ast, env) => {
   const expr = EVAL(ast.value[1], env);
 
-  if (expr === null || expr === false) {
+  console.log("value", expr.value);
+  if ((expr instanceof MalNil) || expr === false) {
     const result = EVAL(ast.value[3], env);
     return result === undefined ? 'nil' : result;
   }
