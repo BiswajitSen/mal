@@ -85,7 +85,11 @@ const handleIf = (ast, env) => {
 }
 
 const handleFn = (ast, env) => {
-  return new MalFunction(ast.value[1].value, ast.value[2], env);
+  const fn = (...args) => {
+    return EVAL(ast.value[2], Env.create(env, ast.value[1].value, args))
+  }
+
+  return new MalFunction(ast.value[1].value, ast.value[2], env, fn);
 }
 
 const EVAL = (ast, env) => {

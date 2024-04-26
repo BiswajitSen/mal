@@ -161,8 +161,40 @@ class MalFunction extends MalValue {
     return "#<function>";
   }
 
-  apply(args) {
+  apply(context, args) {
     return this.fn.apply(null, args);
+  }
+}
+
+class MalAtom extends MalValue {
+  constructor(value) {
+    super(value)
+  }
+
+  static create(malData) {
+    return new MalAtom(malData);
+  }
+
+  pr_str(print_readably = false) {
+    return "( " + "atom " + pr_str(this.value, print_readably) + " )";
+  }
+
+  isEqual(other) {
+    return (other instanceof MalAtom) && super.isEqual(other);
+  }
+
+  deref() {
+    return this.value;
+  }
+
+  reset(newValue) {
+    this.value = newValue;
+    return this.value;
+  }
+
+  swap(fn, args) {
+    this.value = fn.apply(null, [this.value, ...args]);
+    return this.value;
   }
 }
 
@@ -196,6 +228,7 @@ module.exports = {
   MalHashmap,
   MalFunction,
   MalNil,
+  MalAtom,
   pr_str,
   areEqual
 }

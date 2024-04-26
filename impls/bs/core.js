@@ -1,5 +1,5 @@
 const {pr_str} = require('./types');
-const {MalNil, MalString, MalList, areEqual, MalSequence} = require('./types');
+const {MalNil, MalString, MalList, areEqual, MalSequence, MalAtom} = require('./types');
 const {read_str} = require('./reader');
 const fs = require('fs');
 
@@ -47,7 +47,12 @@ const ns = {
   },
   'str': (...args) => new MalString(args.map(x => pr_str(x, false)).join("")),
   'read-string': (str) => read_str(str.value),
-  'slurp': (filename) => new MalString(fs.readFileSync(filename.value, "utf8"))
+  'slurp': (filename) => new MalString(fs.readFileSync(filename.value, "utf8")),
+  'atom': (malData) => MalAtom.create(malData),
+  'atom?': (x) => (x instanceof MalAtom),
+  'deref': (x) => x.deref(),
+  'reset!': (x, value) => x.reset(value),
+  'swap!': (x, f, ...args) => x.swap(f, args),
 }
 
 module.exports = ns;
