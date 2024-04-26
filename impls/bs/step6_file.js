@@ -14,6 +14,7 @@ const rl = readline.createInterface({
 const initialiseEnv = () => {
   const env = new Env();
   Object.entries(ns).forEach(([k, v]) => env.set(new MalSymbol(k), v));
+  env.set(new MalSymbol('eval'), (ast) => EVAL(ast, env));
   return env;
 }
 
