@@ -49,24 +49,26 @@ const eval_ast = (ast, env) => (isMalDataType(ast)) ? handleMalDataTypes(ast, en
 const READ = (str) => read_str(str);
 
 const handleDef = (ast, env) => {
-  if (ast.value.length !== 3) {
-    throw "Incorrect number of arguments to def!";
-  }
-  const val = EVAL(ast.value[2], env);
-  return env.set(ast.value[1], val);
+  if (ast.value.length !== 3) throw "Incorrect number of arguments to def!";
+
+  const [_, key, exp] = ast.value;
+  const val = EVAL(exp, env);
+
+  return env.set(key, val);
 }
 
 const handleLet = (ast, env) => {
-  if (ast.value.length !== 3) {
-    throw "Incorrect number of arguments to let*";
-  }
+  if (ast.value.length !== 3) throw "Incorrect number of arguments to let*";
+
   const newEnv = new Env(env);
   const bindings = ast.value[1].value;
+  const expr = ast.value[2];
+
   for (let i = 0; i < bindings.length; i += 2) {
     newEnv.set(bindings[i], EVAL(bindings[i + 1], newEnv));
   }
 
-  return EVAL(ast.value[2], newEnv);
+  return EVAL(expr, newEnv);
 }
 
 const handleDo = (ast, env) => {
@@ -74,12 +76,17 @@ const handleDo = (ast, env) => {
 }
 
 const handleIf = (ast, env) => {
-  const expr = EVAL(ast.value[1], env);
-  return (expr === false || expr instanceof MalNil) ? ast.value[3] : ast.value[2];
+  const [_, condition, then, otherwise] = ast.value;
+  const expr = EVAL(condition, env);
+  return (expr === false || expr instanceof MalNil) ? otherwise : then;
 }
 
 const handleFn = (ast, env) => {
-  return new MalFunction(ast.value[1].value, ast.value[2], env);
+  const [_, bindings, fnBody] = ast.value;
+  const fn = (...args) =>
+    EVAL(fnBody, Env.create(env, bindings.value, args));
+
+  return new MalFunction(bindings.value, fnBody, env, fn);
 }
 
 const EVAL = (ast, env) => {

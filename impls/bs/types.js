@@ -169,6 +169,7 @@ class MalFunction extends MalValue {
 class MalAtom extends MalValue {
   constructor(value) {
     super(value)
+    console.log(this.value);
   }
 
   static create(malData) {
