@@ -140,4 +140,20 @@ const repl = (env) => {
   });
 }
 
-repl(initialiseEnv());
+const main = () => {
+  const env = initialiseEnv();
+
+  const args = process.argv.slice(3);
+  const malArgs = new MalList(args.map(x => new MalString(x)));
+  env.set(new MalSymbol("*ARGV*"), malArgs);
+  if (process.argv.length <= 2) return repl(env);
+
+  const fileName = process.argv[2];
+  const code = `(load-file "${fileName}")`;
+  rl.close();
+  rep(code, env);
+  process.exit(0);
+}
+
+main();
+

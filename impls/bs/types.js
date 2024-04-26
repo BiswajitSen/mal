@@ -176,7 +176,7 @@ class MalAtom extends MalValue {
   }
 
   pr_str(print_readably = false) {
-    return "( " + "atom " + pr_str(this.value, print_readably) + " )";
+    return "(" + "atom " + pr_str(this.value, print_readably) + ")";
   }
 
   isEqual(other) {
