@@ -53,6 +53,13 @@ const ns = {
   'deref': (x) => x.deref(),
   'reset!': (x, value) => x.reset(value),
   'swap!': (x, f, ...args) => x.swap(f, args),
+  'cons': (x, y) => {
+    if (!y instanceof MalList) throw "can not conj into a non list data type";
+    return y.cons(x);
+  },
+  'concat': (...lists) => {
+    return lists.reduce((newList, list) => newList.concat(list), new MalList())
+  }
 }
 
 module.exports = ns;

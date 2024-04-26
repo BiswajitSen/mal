@@ -50,12 +50,20 @@ class MalSequence extends MalValue {
 }
 
 class MalList extends MalSequence {
-  constructor(value) {
+  constructor(value = []) {
     super(value);
   }
 
   pr_str(print_readably = false) {
     return this.pr_seq(print_readably);
+  }
+
+  cons(val) {
+    return new MalList([val, ...this.value]);
+  }
+
+  concat(anotherList) {
+    return new MalList([...this.value, ...anotherList.value]);
   }
 }
 
