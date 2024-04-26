@@ -46,7 +46,7 @@ const ns = {
     return new MalNil();
   },
   'str': (...args) => new MalString(args.map(x => pr_str(x, false)).join("")),
-  'read-string': (str) => read_str(str.string),
+  'read-string': (str) => read_str(str.value),
   'slurp': (filename) => new MalString(fs.readFileSync(filename.string, "utf8"))
 }
 

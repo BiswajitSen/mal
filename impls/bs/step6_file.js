@@ -1,117 +1,133 @@
-const {Env} = require('./env');
-const ns = require('./core');
-const readline = require("node:readline");
+const readline = require('readline');
+const {MalSymbol, MalList, MalVector, MalHashmap, MalValue, MalNil, MalFunction, MalString} = require('./types');
+const Env = require('./env');
 
-const {stdin: input, stdout: output} = require("node:process");
-const printer = require('./types');
-const {read_str} = require("./reader");
-const {MalSymbol, MalList, MalVector, MalHashmap, MalValue, MalFunction, MalNil} = require("./types");
+const {read_str} = require('./reader');
+const {pr_str} = require('./types');
+const ns = require("./core");
 
-const rl = readline.createInterface({input, output});
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-const READ = (str) => read_str(str);
+const initialiseEnv = () => {
+  const env = new Env();
+  Object.entries(ns).forEach(([k, v]) => env.set(new MalSymbol(k), v));
+  return env;
+}
 
-const eval_ast = (ast, env) => {
+const eval_symbol = (symbol, env) => {
+  const val = env.get(symbol);
+  if (val !== undefined) return val;
+  throw `'${symbol.value}' symbol not found`;
+}
+
+const handleMalDataTypes = (ast, env) => {
   switch (true) {
-    case ast instanceof MalList:
-      return ast.value.map((token) => EVAL(token, env));
-    case ast instanceof MalSymbol:
-      return env.get(ast);
-    case ast instanceof MalVector:
-      return new MalVector(ast.value.map((token) => EVAL(token, env)));
-    case ast instanceof MalHashmap:
-      return new MalHashmap(ast.value.map((token) => EVAL(token, env)))
+    case ast.isInstanceOf(MalSymbol):
+      return eval_symbol(ast, env);
+    case ast.isInstanceOf(MalVector):
+      return new MalVector(ast.value.map((x) => EVAL(x, env)));
+    case ast.isInstanceOf(MalList):
+      return new MalList(ast.value.map((x) => EVAL(x, env)));
+    case ast.isInstanceOf(MalHashmap):
+      const hashmap = ast.value;
+      const newHashMap = new Map();
+      for (const [key, value] of hashmap.entries()) {
+        newHashMap.set(key, EVAL(value, env))
+      }
+      return new MalHashmap(newHashMap);
     default:
       return ast;
   }
-};
-
-const handleLet = (ast, env) => {
-  const let_env = new Env(env);
-  const bindings = ast.value[1].value;
-  for (let i = 0; i < bindings.length; i += 2) {
-    let_env.set(bindings[i].value, EVAL(bindings[i + 1], let_env));
-  }
-
-  return EVAL(ast.value[2], let_env);
 }
 
+const isMalDataType = (ast) => ast instanceof MalValue
+const eval_ast = (ast, env) => (isMalDataType(ast)) ? handleMalDataTypes(ast, env) : ast;
+
+const READ = (str) => read_str(str);
+
 const handleDef = (ast, env) => {
+  if (ast.value.length !== 3) {
+    throw "Incorrect number of arguments to def!";
+  }
   const val = EVAL(ast.value[2], env);
-  env.set(ast.value[1].value, val);
-  return val;
+  return env.set(ast.value[1], val);
+}
+
+const handleLet = (ast, env) => {
+  if (ast.value.length !== 3) {
+    throw "Incorrect number of arguments to let*";
+  }
+  const newEnv = new Env(env);
+  const bindings = ast.value[1].value;
+  for (let i = 0; i < bindings.length; i += 2) {
+    newEnv.set(bindings[i], EVAL(bindings[i + 1], newEnv));
+  }
+
+  return EVAL(ast.value[2], newEnv);
+}
+
+const handleDo = (ast, env) => {
+  return ast.value.slice(1).reduce((_, form) => EVAL(form, env), new MalNil());
 }
 
 const handleIf = (ast, env) => {
   const expr = EVAL(ast.value[1], env);
-  return ((expr instanceof MalNil) || expr === false) ? ast.value[3] : ast.value[2];
-}
-
-const handleDo = (ast, env) => {
-  const [_, ...exprs] = ast.value;
-  const [result] = exprs.map((form) => EVAL(form, env)).slice(-1);
-  return result;
+  return (expr === false || expr instanceof MalNil) ? ast.value[3] : ast.value[2];
 }
 
 const handleFn = (ast, env) => {
-  return new MalFunction(ast.value[1], ast.value[2], env);
+  return new MalFunction(ast.value[1].value, ast.value[2], env);
 }
 
 const EVAL = (ast, env) => {
   while (true) {
-    if (!(ast instanceof MalList)) {
-      return eval_ast(ast, env);
-    }
+    if (!(ast instanceof MalList)) return eval_ast(ast, env);
+    if (ast.isEmpty()) return ast;
 
-    if (ast.value.length === 0) {
-      return ast;
-    }
-
-    const firstValue = ast.value[0].value;
-    switch (firstValue) {
-      case 'let*':
-        return handleLet(ast, env);
-      case 'def!':
+    const firstElement = ast.value[0].value;
+    switch (true) {
+      case firstElement === "def!":
         return handleDef(ast, env);
-      case "if":
+      case firstElement === "let*":
+        return handleLet(ast, env);
+      case firstElement === "do":
+        return handleDo(ast, env);
+      case firstElement === "if":
         ast = handleIf(ast, env);
         break;
-      case "do":
-        return handleDo(ast, env);
-      case "fn*":
+      case firstElement === "fn*":
         return handleFn(ast, env);
-      default: {
-        const [fn, ...args] = eval_ast(ast, env);
+      default:
+        const [fn, ...args] = eval_ast(ast, env).value;
+
         if (fn instanceof MalFunction) {
-          env = Env.create(fn.env, fn.binds.value, args);
           ast = fn.fnBody;
-        } else {
-          return fn.apply(null, args);
+          env = Env.create(fn.env, fn.binds, args);
+          break;
         }
-      }
+
+        if (fn instanceof Function) return fn.apply(null, args);
+        throw `${fn} is not a function`;
     }
   }
 };
-const PRINT = (str) => printer.pr_str(str);
+const PRINT = (val) => pr_str(val, true);
 
 const rep = (str, env) => PRINT(EVAL(READ(str), env));
 
-const instantiateEnv = () => {
-  const repl_env = new Env();
-  Object.entries(ns).forEach(([k, v]) => repl_env.set(k, v));
-  return repl_env;
-}
-const env = instantiateEnv();
-const repl = () => {
-  rl.question("user> ", (input) => {
+const repl = (env) => {
+  rl.question('user> ', (str) => {
     try {
-      console.log(rep(input, env));
+      console.log(rep(str, env));
     } catch (e) {
       console.log(e);
+    } finally {
+      repl(env);
     }
-
-    repl();
   });
-};
+}
 
-repl();
+repl(initialiseEnv());
