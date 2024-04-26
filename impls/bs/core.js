@@ -47,7 +47,7 @@ const ns = {
   },
   'str': (...args) => new MalString(args.map(x => pr_str(x, false)).join("")),
   'read-string': (str) => read_str(str.value),
-  'slurp': (filename) => new MalString(fs.readFileSync(filename.string, "utf8"))
+  'slurp': (filename) => new MalString(fs.readFileSync(filename.value, "utf8"))
 }
 
 module.exports = ns;

@@ -1,0 +1,2 @@
+(def! mal-prog (list + 1 2))
+(eval mal-prog)
