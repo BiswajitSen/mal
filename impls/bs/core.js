@@ -1,4 +1,4 @@
-const {pr_str} = require('./types');
+const {pr_str, MalVector} = require('./types');
 const {MalNil, MalString, MalList, areEqual, MalSequence, MalAtom} = require('./types');
 const {read_str} = require('./reader');
 const fs = require('fs');
@@ -59,7 +59,8 @@ const ns = {
   },
   'concat': (...lists) => {
     return lists.reduce((newList, list) => newList.concat(list), new MalList())
-  }
+  },
+  'vec': (list) => new MalVector(list.value),
 }
 
 module.exports = ns;

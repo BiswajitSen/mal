@@ -4,7 +4,7 @@ class MalValue {
   }
 
   isEqual(other) {
-    return other === this;
+    return other.value === this.value;
   }
 
   isInstanceOf(className) {
@@ -65,6 +65,10 @@ class MalList extends MalSequence {
   concat(anotherList) {
     return new MalList([...this.value, ...anotherList.value]);
   }
+
+  startsWith(symbol) {
+    return areEqual(this.value[0], symbol);
+  }
 }
 
 class MalVector extends MalSequence {
@@ -74,6 +78,10 @@ class MalVector extends MalSequence {
 
   pr_str(print_readably = false) {
     return this.pr_seq(print_readably, ['[', ']']);
+  }
+
+  cons(val) {
+    return new MalList([val, ...this.value]);
   }
 }
 

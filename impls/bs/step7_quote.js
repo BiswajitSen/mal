@@ -1,11 +1,19 @@
 const readline = require('readline');
-const {MalSymbol, MalList, MalVector, MalHashmap, MalValue, MalNil, MalFunction, MalString} = require('./types');
+const {
+  MalSymbol,
+  MalList,
+  MalVector,
+  MalHashmap,
+  MalValue,
+  MalNil,
+  MalFunction,
+  MalString,
+} = require('./types');
 const Env = require('./env');
 
 const {read_str} = require('./reader');
 const {pr_str} = require('./types');
 const ns = require("./core");
-const {value} = require("lodash/seq");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -101,6 +109,35 @@ const handleQuote = (ast, env) => {
   return arg;
 }
 
+const handleQuasiquote = (ast) => {
+  const unquoteSymbol = new MalSymbol("unquote");
+
+  if (ast instanceof MalList && ast.startsWith(unquoteSymbol))
+    return ast.value[1];
+
+  if (ast instanceof MalVector || ast instanceof MalList) {
+    let result = new MalList();
+    for (let i = ast.value.length - 1; i >= 0; i--) {
+      const elt = ast.value[i];
+
+      if ((elt instanceof MalList) && elt.startsWith("splice-unquote")) {
+        result = new MalList([new MalSymbol("concat"), elt.value[1], result])
+      } else {
+        result = new MalList([new MalSymbol("cons"), handleQuasiquote(elt), result])
+      }
+    }
+
+    if (ast instanceof MalList) return result;
+    if (ast instanceof MalVector) return new MalList([new MalSymbol("vec"), result]);
+  }
+
+  if ((ast instanceof MalSymbol) || (ast instanceof MalHashmap))
+    return new MalList([new MalSymbol("quote"), ast]);
+
+  return ast;
+}
+
+
 const EVAL = (ast, env) => {
   while (true) {
     if (!(ast instanceof MalList)) return eval_ast(ast, env);
@@ -121,6 +158,11 @@ const EVAL = (ast, env) => {
         return handleFn(ast, env);
       case firstElement === 'quote':
         return handleQuote(ast, env);
+      case firstElement === 'quasiquote':
+        ast = handleQuasiquote(ast.value[1]);
+        break;
+      case firstElement === 'quasiquoteexpand':
+        return handleQuasiquote(ast.value[1]);
       default:
         const [fn, ...args] = eval_ast(ast, env).value;
 
