@@ -1,47 +1,46 @@
-class Env {
-  #data;
-  #outer;
+const {MalSymbol, areEqual, MalList} = require('./types');
 
-  constructor(outer = null, data = new Map()) {
-    this.#outer = outer;
-    this.#data = data;
+class Env {
+  constructor(outer = null) {
+    this.data = new Map();
+    this.outer = outer;
   }
 
   static create(outer = null, binds = [], exprs = []) {
-    const data = new Map();
-    let i = 0;
-    if (binds && exprs) {
-      while (i < binds.length) {
-        if (binds[i].value === '&') break;
-        data.set(binds[i].value, exprs[i]);
-        i++;
+    const env = new Env(outer);
+    const ampersand = new MalSymbol("&");
+    for (let i = 0; i < binds.length; i++) {
+      if (areEqual(binds[i], ampersand)) {
+        const rest = exprs.slice(i);
+        env.set(binds[i + 1], new MalList(rest));
+        return env;
       }
+      env.set(binds[i], exprs[i]);
     }
-    if (i < binds.length) data.set(binds[i + 1].value, exprs.slice(i));
-    return new Env(outer, data);
+    return env;
   }
 
-  set(key, value) {
-    this.#data.set(key, value);
+  set(key, malValue) {
+    if (!(key instanceof MalSymbol)) {
+      throw `${key} not symbol`;
+    }
+    this.data.set(key.value, malValue);
+    return malValue;
   }
 
   find(key) {
-    if (this.#data.has(key)) {
-      return this.#data;
-    }
-
-    return this.#outer && this.#outer.find(key);
+    return (this.data.has(key.value)) ?
+      this : this.outer && this.outer.find(key);
   }
 
   get(key) {
-    const env = this.find(key.value);
-    if (env === null) throw new Error(`${key.value} not found`);
-    if (env) return env.get(key.value);
-  }
+    const env = this.find(key);
+    if (env === null) {
+      throw `${key.value} not found`
+    }
 
-  toString() {
-    return this.set()
+    return env.data.get(key.value);
   }
 }
 
-module.exports = {Env};
+module.exports = Env;

@@ -1,37 +1,36 @@
-const _ = require("lodash");
-const {pr_str} = require("./printer");
-
 class MalValue {
-  value;
-
   constructor(value) {
     this.value = value;
   }
 
-  pr_str() {
-    return this.value.toString();
+  isEqual(other) {
+    return other === this;
   }
 
-  isEql(other) {
-    return this.value === other.value;
+  isInstanceOf(className) {
+    return (this instanceof className);
   }
 }
 
 class MalSequence extends MalValue {
-  constructor(sequence) {
-    super(sequence);
+  constructor(value) {
+    super(value);
   }
 
   pr_seq(print_readably = false, brackets = ['(', ')']) {
     const [opening, closing] = brackets;
-    return opening + this.value.map(toString).join(" ") + closing;
+    return opening + this.value.map(x => pr_str(x, print_readably)).join(" ") + closing;
+  }
+
+  isEmpty() {
+    return this.value.length === 0;
   }
 
   count() {
     return this.value.length;
   }
 
-  isEql(other) {
+  isEqual(other) {
     if (!(other instanceof MalSequence)) {
       return false;
     }
@@ -41,7 +40,7 @@ class MalSequence extends MalValue {
     }
 
     for (let i = 0; i < this.count(); i++) {
-      if (!isEql(this.value[i], other.value[i])) {
+      if (!areEqual(this.value[i], other.value[i])) {
         return false;
       }
     }
@@ -51,7 +50,6 @@ class MalSequence extends MalValue {
 }
 
 class MalList extends MalSequence {
-
   constructor(value) {
     super(value);
   }
@@ -71,46 +69,42 @@ class MalVector extends MalSequence {
   }
 }
 
-class MalHashmap extends MalSequence {
-
+class MalHashmap extends MalValue {
   constructor(value) {
     super(value);
   }
 
-  pr_str(print_readably) {
-    return this.pr_seq(print_readably, ['{', '}']);
+  pr_str(print_readably = false) {
+    let str = "";
+    let separator = "";
+    for (const [key, value] of this.value.entries()) {
+      str = str + separator + pr_str(key, print_readably) + " " + pr_str(value, print_readably);
+      separator = " ";
+    }
+    return "{" + str + "}";
   }
 }
 
-class MalKeyword extends MalValue {
-  #keyword;
-
-  constructor(keyword) {
-    super(keyword);
-    this.#keyword = keyword;
+class MalNil extends MalValue {
+  constructor() {
+    super("nil");
   }
 
-  pr_str() {
-    return ':' + this.#keyword;
-  }
-}
-
-class MalSymbol extends MalValue {
-  constructor(symbol) {
-    super(symbol);
+  pr_str(print_readably = false) {
+    return "nil";
   }
 
-  pr_str() {
-    return this.value;
+  isEqual(other) {
+    return other instanceof MalNil;
   }
 }
 
 class MalString extends MalValue {
-  constructor(string) {
-    super(string);
+  constructor(value) {
+    super(value);
   }
 
-  pr_str(print_readably) {
+  pr_str(print_readably = false) {
     if (print_readably) {
       return '"' + this.value
         .replace(/\\/g, "\\\\")
@@ -119,59 +113,89 @@ class MalString extends MalValue {
     }
     return this.value;
   }
+
+  isEqual(other) {
+    return (other instanceof MalString) && this.value === other.value;
+  }
 }
 
-class MalNil extends MalValue {
-  constructor() {
-    super(false);
+class MalKeyword extends MalValue {
+  constructor(value) {
+    super(value);
   }
 
-  count() {
-    return 0;
+  pr_str(print_readably = false) {
+    return ':' + this.value;
   }
 
-  pr_str() {
-    return "nil";
+  isEqual(other) {
+    return (other instanceof MalKeyword) && this.value === other.value;
+  }
+
+}
+
+class MalSymbol extends MalValue {
+  constructor(value) {
+    super(value);
+  }
+
+  pr_str(print_readably = false) {
+    return this.value;
+  }
+
+  isEqual(other) {
+    return (other instanceof MalSymbol) && this.value === other.value;
   }
 }
 
 class MalFunction extends MalValue {
-  env;
-  binds;
-  fnBody;
-
-  constructor(binds, fnBody, env) {
+  constructor(binds, fnBody, env, fn) {
     super();
     this.binds = binds;
     this.fnBody = fnBody;
     this.env = env;
+    this.fn = fn;
   }
 
   pr_str(print_readably = false) {
     return "#<function>";
   }
-}
 
-const isEql = (a, b) => {
-  if ((a instanceof MalValue) && (b instanceof MalValue)) {
-    return a.isEql(b);
+  apply(args) {
+    return this.fn.apply(null, args);
   }
-  return _.isEqual(a, b);
 }
 
-const getCount = (x) => (x instanceof MalValue) ? x.count() : (x && x.length || 0);
-const toString = (x) => (x instanceof MalValue ? x.pr_str() : x);
+const pr_str = (val, print_readably = false) => {
+  if (val instanceof MalValue) {
+    return val.pr_str(print_readably);
+  }
+
+  if (val instanceof Function) {
+    return "#<function>";
+  }
+
+  return val;
+}
+
+const areEqual = (a, b) => {
+  if ((a instanceof MalValue) && (b instanceof MalValue)) {
+    return a.isEqual(b);
+  }
+  return a === b;
+}
 
 module.exports = {
   MalValue,
+  MalSequence,
   MalList,
   MalVector,
-  MalHashmap,
+  MalString,
   MalKeyword,
   MalSymbol,
-  MalString,
-  MalNil,
+  MalHashmap,
   MalFunction,
-  isEql,
-  getCount
-};
+  MalNil,
+  pr_str,
+  areEqual
+}

@@ -1,88 +1,106 @@
-const {Env} = require('./env');
+const readline = require('readline');
+const {MalSymbol, MalList, MalVector, MalHashmap, MalValue} = require('./types');
+const Env = require('./env');
 
-const readline = require("node:readline");
-const {stdin: input, stdout: output} = require("node:process");
+const {read_str} = require('./reader');
+const {pr_str} = require('./types');
 
-const printer = require("./printer");
-const {read_str} = require("./reader");
-const {MalSymbol, MalList, MalVector, MalHashmap, MalValue} = require("./types");
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-const rl = readline.createInterface({input, output});
+const initialiseEnv = () => {
+  const env = new Env();
+  env.set(new MalSymbol('+'), (...args) => args.reduce((a, b) => a + b, 0));
+  env.set(new MalSymbol('*'), (...args) => args.reduce((a, b) => a * b, 1));
+  env.set(new MalSymbol('-'), (...args) => args.reduce((a, b) => a - b));
+  env.set(new MalSymbol('/'), (...args) => args.reduce((a, b) => a / b));
+
+  return env;
+}
+
+const eval_symbol = (symbol, env) => {
+  console.log({symbol});
+  const val = env.get(symbol);
+  if (val) return val;
+  throw `'${symbol.value}' symbol not found`;
+}
+
+const handleMalDataTypes = (ast, env) => {
+  switch (true) {
+    case ast.isInstanceOf(MalSymbol):
+      return eval_symbol(ast, env);
+    case ast.isInstanceOf(MalVector):
+      return new MalVector(ast.value.map((x) => EVAL(x, env)));
+    case ast.isInstanceOf(MalList):
+      return new MalList(ast.value.map((x) => EVAL(x, env)));
+    case ast.isInstanceOf(MalHashmap):
+      const hashmap = ast.value;
+      const newHashMap = new Map();
+      for (const [key, value] of hashmap.entries()) {
+        newHashMap.set(key, EVAL(value, env))
+      }
+      return new MalHashmap(newHashMap);
+  }
+}
+
+const isMalDataType = (ast) => ast instanceof MalValue
+const eval_ast = (ast, env) => (isMalDataType(ast)) ? handleMalDataTypes(ast, env) : ast;
 
 const READ = (str) => read_str(str);
 
-const eval_ast = (ast, env) => {
-  switch (true) {
-    case ast instanceof MalList:
-      return ast.value.map((token) => EVAL(token, env));
-    case ast instanceof MalSymbol:
-      return env.get(ast);
-    case ast instanceof MalVector:
-      return new MalVector(ast.value.map((token) => EVAL(token, env)));
-
-    case ast instanceof MalHashmap:
-      return new MalHashmap(ast.value.map((token) => EVAL(token, env)))
-    default:
-      return ast;
+const handleDef = (ast, env) => {
+  if (ast.value.length !== 3) {
+    throw "Incorrect number of arguments to def!";
   }
-};
+  const val = EVAL(ast.value[2], env);
+  return env.set(ast.value[1], val);
+}
+
+const handleLet = (ast, env) => {
+  if (ast.value.length !== 3) {
+    throw "Incorrect number of arguments to let*";
+  }
+  const newEnv = new Env(env);
+  const bindings = ast.value[1].value;
+  for (let i = 0; i < bindings.length; i += 2) {
+    newEnv.set(bindings[i], EVAL(bindings[i + 1], newEnv));
+  }
+
+  return EVAL(ast.value[2], newEnv);
+}
 
 const EVAL = (ast, env) => {
-  if (!(ast instanceof MalList)) {
-    return eval_ast(ast, env);
-  }
+  if (!(ast instanceof MalList)) return eval_ast(ast, env)
+  if (ast.isEmpty()) return ast;
 
-  if (ast.value.length === 0) {
-    return ast;
-  }
-
-  if (ast.value[0].value === 'let*') {
-    const let_env = new Env(env);
-    const bindings = ast.value[1].value;
-    for (let i = 0; i < bindings.length; i += 2) {
-      let_env.set(bindings[i].value, EVAL(bindings[i + 1], let_env));
-    }
-
-    return EVAL(ast.value[2], let_env);
-  }
-
-  if (ast.value[0].value === 'def!') {
-    const val = EVAL(ast.value[2], env);
-    env.set(ast.value[1].value, val);
-    return val;
-  }
-
-  const [fn, ...args] = eval_ast(ast, env);
-
-  if (fn instanceof Function) {
-    return fn.apply(null, args);
+  const firstElement = ast.value[0].value;
+  switch (true) {
+    case firstElement === "def!":
+      return handleDef(ast, env);
+    case firstElement === "let*":
+      return handleLet(ast, env);
+    default:
+      const [fn, ...args] = eval_ast(ast, env).value;
+      if (fn instanceof Function) return fn.apply(null, args);
+      throw `${fn} is not a function`;
   }
 };
-
-const PRINT = (str) => printer.pr_str(str);
+const PRINT = (val) => pr_str(val, true);
 
 const rep = (str, env) => PRINT(EVAL(READ(str), env));
 
-const instantiateEnv = () => {
-  const repl_env = new Env();
-  repl_env.set('+', (a, b) => a + b);
-  repl_env.set('-', (a, b) => a - b);
-  repl_env.set('*', (a, b) => a * b);
-  repl_env.set('/', (a, b) => a / b);
-
-  return repl_env;
-}
-const env = instantiateEnv();
-const repl = () => {
-  rl.question("user> ", (input) => {
+const repl = (env) => {
+  rl.question('user> ', (str) => {
     try {
-      console.log(rep(input, env));
+      console.log(rep(str, env));
     } catch (e) {
       console.log(e);
+    } finally {
+      repl(env);
     }
-
-    repl();
   });
-};
+}
 
-repl();
+repl(initialiseEnv());

@@ -3,7 +3,7 @@ const ns = require('./core');
 const readline = require("node:readline");
 
 const {stdin: input, stdout: output} = require("node:process");
-const printer = require("./printer");
+const printer = require('./types');
 const {read_str} = require("./reader");
 const {MalSymbol, MalList, MalVector, MalHashmap, MalValue, MalFunction, MalNil} = require("./types");
 

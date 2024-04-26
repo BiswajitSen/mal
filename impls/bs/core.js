@@ -1,62 +1,53 @@
-const _ = require('lodash');
-const {pr_str} = require("./printer");
-const {MalList, MalValue, isEql, getCount, MalNil} = require("./types");
-const {read_str} = require("./reader");
-const {readFileSync} = require("fs");
+const {pr_str} = require('./types');
+const {MalNil, MalString, MalList, areEqual, MalSequence} = require('./types');
+const {read_str} = require('./reader');
+const fs = require('fs');
 
 const ns = {
-  '+': (a, b) => a + b,
-  '-': (a, b) => a - b,
-  '*': (a, b) => a * b,
-  '/': (a, b) => a / b,
-  '=': (a, b) => {
-    return isEql(a, b)
+  "+": (...args) => args.reduce((a, b) => a + b, 0),
+  '*': (...args) => args.reduce((a, b) => a * b, 1),
+  '-': (...args) => {
+    if (args.length === 1) {
+      args.unshift(0);
+    }
+    return args.reduce((a, b) => a - b);
   },
+  '/': (...args) => {
+    if (args.length === 1) {
+      args.unshift(1);
+    }
+    return args.reduce((a, b) => a / b);
+  },
+  '=': (a, b) => areEqual(a, b),
   '<': (a, b) => a < b,
-  '<=': (a, b) => (a <= b),
-  '>': (a, b) => (a > b),
-  'and': (a, b) => (a && b),
-  '>=': (a, b) => (a >= b),
-  'list': (...args) => new MalList([...args]),
-  'list?': (x) => (x instanceof Array) || (x instanceof MalList),
-  'count': (x) => getCount(x),
-  'empty?': (x) => {
-    if (x instanceof MalValue) return x.value.length === 0;
-    return (x.length === 0)
-  },
-  'prn': (...args) => {
-    const output = args.map(x => x.value ? x.value : x).join(' ');
-    console.log(output);
-    return 'nil';
-  },
-  'println': (...args) => {
-    const str = args.map(x => pr_str(x)).join(" ");
-    console.log(str);
-    return null;
-  },
-  'str': (...x) => {
-    const output = x.map(a => a.value).join("")
-    return output || `""`;
-  },
-  'pr-str': (...x) => {
-    const output = [];
-    x.forEach(token => {
-      if (token instanceof MalValue) output.push(token.pr_str(x, true));
-    });
-
-    return output.join(' ') || '""';
-  },
+  '<=': (a, b) => a <= b,
+  '>': (a, b) => a > b,
+  '>=': (a, b) => a >= b,
+  'empty?': (a) => a.isEmpty(),
   'not': (x) => {
     if (x instanceof MalNil) return true;
     return (x === 0) ? false : !x
   },
-  'read-string': (x) => {
-    console.log(x.value);
-    read_str(x.value)
+  'count': (x) => (x instanceof MalSequence) ? x.count() : 0,
+  'list': (...args) => new MalList(args),
+  'list?': (a) => a instanceof MalList,
+  'pr-str': (...args) =>
+    pr_str(new MalString(args.map(x => pr_str(x, true))
+      .join(" ")), true),
+
+  'println': (...args) => {
+    const str = args.map(x => pr_str(x, false)).join(" ");
+    console.log(str);
+    return new MalNil();
   },
-  'slurp': (fileName) => {
-    return readFileSync(fileName, {encoding: "utf-8"})
-  }
-};
+  'prn': (...args) => {
+    const str = args.map(x => pr_str(x, true)).join(" ");
+    console.log(str);
+    return new MalNil();
+  },
+  'str': (...args) => new MalString(args.map(x => pr_str(x, false)).join("")),
+  'read-string': (str) => read_str(str.string),
+  'slurp': (filename) => new MalString(fs.readFileSync(filename.string, "utf8"))
+}
 
 module.exports = ns;

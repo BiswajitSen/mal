@@ -1,28 +1,28 @@
-const readline = require("node:readline");
-const {stdin: input, stdout: output} = require("node:process");
+const readline = require('readline');
+const {read_str} = require('./reader');
+const {pr_str} = require('./types');
 
-const printer = require("./printer");
-const {read_str} = require("./reader");
-const {pr_str} = require("./printer");
-
-const rl = readline.createInterface({input, output});
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
 const READ = (str) => read_str(str);
-const EVAL = (str) => str;
-const PRINT = (str) => pr_str(str);
+const EVAL = (ast) => ast;
+const PRINT = (val) => pr_str(val, true);
 
 const rep = (str) => PRINT(EVAL(READ(str)));
 
 const repl = () => {
-  rl.question("user> ", (input) => {
+  rl.question('user> ', (str) => {
     try {
-      console.log(rep(input));
+      console.log(rep(str));
     } catch (e) {
       console.log(e);
+    } finally {
+      repl();
     }
-
-    repl();
   });
-};
+}
 
 repl();
