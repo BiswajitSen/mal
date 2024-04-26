@@ -11,10 +11,15 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+const loadCustomFns = (env) => {
+  rep('(def! load-file (fn* (file_name) (eval (read-string (str "(do " (slurp file_name) "\nnil)")))))', env);
+}
+
 const initialiseEnv = () => {
   const env = new Env();
   Object.entries(ns).forEach(([k, v]) => env.set(new MalSymbol(k), v));
   env.set(new MalSymbol('eval'), (ast) => EVAL(ast, env));
+  loadCustomFns(env);
   return env;
 }
 
