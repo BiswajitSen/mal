@@ -120,7 +120,7 @@ const handleQuasiquote = (ast) => {
     for (let i = ast.value.length - 1; i >= 0; i--) {
       const elt = ast.value[i];
 
-      if ((elt instanceof MalList) && elt.startsWith("splice-unquote")) {
+      if ((elt instanceof MalList) && elt.value[0] && elt.value[0].value === "splice-unquote") {
         result = new MalList([new MalSymbol("concat"), elt.value[1], result])
       } else {
         result = new MalList([new MalSymbol("cons"), handleQuasiquote(elt), result])
@@ -136,7 +136,6 @@ const handleQuasiquote = (ast) => {
 
   return ast;
 }
-
 
 const EVAL = (ast, env) => {
   while (true) {
