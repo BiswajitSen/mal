@@ -57,10 +57,11 @@ const ns = {
     if (!y instanceof MalList) throw "can not conj into a non list data type";
     return y.cons(x);
   },
-  'concat': (...lists) => {
-    return lists.reduce((newList, list) => newList.concat(list), new MalList())
-  },
+  'concat': (...lists) => lists.reduce((newList, list) => newList.concat(list), new MalList()),
   'vec': (list) => new MalVector(list.value),
+  'nth': (seq, n) => seq.nth(n),
+  'first': (seq) => (seq instanceof MalNil) ? seq : seq.first(),
+  'rest': (seq) => (seq === MalNil) ? new MalList([]) : seq.rest()
 }
 
 module.exports = ns;
