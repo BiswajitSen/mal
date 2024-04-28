@@ -123,6 +123,22 @@ class MalHashmap extends MalValue {
   get(key) {
     return this.value.get(key) || new MalNil();
   }
+
+  contains(key) {
+    return this.value.has(key);
+  }
+
+  keys() {
+    return this.value.keys();
+  }
+
+  vals() {
+    return this.value.value();
+  }
+
+  first() {
+    return 'ok'
+  }
 }
 
 class MalNil extends MalValue {

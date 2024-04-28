@@ -59,8 +59,15 @@ const ns = {
   },
   'concat': (...lists) => lists.reduce((newList, list) => newList.concat(list), new MalList()),
   'vec': (list) => new MalVector(list.value),
-  'nth': (seq, n) => seq.nth(n),
-  'first': (seq) => (seq instanceof MalNil) ? seq : seq.first(),
+  'nth': (seq, n) => {
+    if (seq instanceof MalSequence) seq.nth(n)
+    return seq[n];
+  },
+  'first': (seq) => {
+    if (seq instanceof MalNil) return seq;
+    if (seq instanceof MalSequence) seq.first()
+    return seq[0];
+  },
   'rest': (seq) => (seq === MalNil) ? new MalList([]) : seq.rest(),
   'symbol': (val) => new MalSymbol(val),
   'symbol?': (x) => x instanceof MalSymbol,
@@ -76,6 +83,8 @@ const ns = {
     return new MalHashmap(kvPairs);
 
   },
+  'contains?': (hm, key) => hm.contains(key),
+  'keys': (hm) => hm.keys(),
   'nil?': (x) => x instanceof MalNil,
   'true?': (x) => x,
   'false?': (x) => !x,

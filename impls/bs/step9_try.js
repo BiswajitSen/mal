@@ -161,8 +161,9 @@ const handleQuasiquote = (ast) => {
 
 function handleTry(ast, env) {
   const [, expr, cth] = ast.value;
+  console.log({expr, cth});
   try {
-    return EVAL(expr);
+    return EVAL(expr, env);
   } catch (e) {
     console.log(e);
   }
@@ -201,7 +202,6 @@ const EVAL = (ast, env) => {
         return macroExpand(ast.value[1], env);
       case firstElement === "try*":
         return handleTry(ast, env);
-
       default:
         const [fn, ...args] = eval_ast(ast, env).value;
 
