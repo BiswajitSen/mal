@@ -1,4 +1,4 @@
-const {pr_str, MalVector} = require('./types');
+const {pr_str, MalVector, MalSymbol, MalHashmap, MalKeyword} = require('./types');
 const {MalNil, MalString, MalList, areEqual, MalSequence, MalAtom} = require('./types');
 const {read_str} = require('./reader');
 const fs = require('fs');
@@ -61,7 +61,26 @@ const ns = {
   'vec': (list) => new MalVector(list.value),
   'nth': (seq, n) => seq.nth(n),
   'first': (seq) => (seq instanceof MalNil) ? seq : seq.first(),
-  'rest': (seq) => (seq === MalNil) ? new MalList([]) : seq.rest()
+  'rest': (seq) => (seq === MalNil) ? new MalList([]) : seq.rest(),
+  'symbol': (val) => new MalSymbol(val),
+  'symbol?': (x) => x instanceof MalSymbol,
+  'keyword': (x) => MalKeyword.create(x),
+  'keyword?': (x) => x instanceof MalKeyword,
+  'sequential?': (x) => x instanceof MalSequence,
+  'hash-map': (...args) => {
+    if (args.length % 2 !== 0) throw 'odd number of arguments'
+    const kvPairs = new Map();
+    for (let i = 0; i < args.length; i += 2) {
+      kvPairs.set(args[i], args[i + 1]);
+    }
+    return new MalHashmap(kvPairs);
+
+  },
+  'nil?': (x) => x instanceof MalNil,
+  'true?': (x) => x,
+  'false?': (x) => !x,
+  'vector?': (x) => x instanceof MalVector,
+  'map?': (x) => x instanceof MalHashmap,
 }
 
 module.exports = ns;

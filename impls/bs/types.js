@@ -119,6 +119,10 @@ class MalHashmap extends MalValue {
     }
     return "{" + str + "}";
   }
+
+  get(key) {
+    return this.value.get(key) || new MalNil();
+  }
 }
 
 class MalNil extends MalValue {
@@ -162,6 +166,12 @@ class MalString extends MalValue {
 class MalKeyword extends MalValue {
   constructor(value) {
     super(value);
+  }
+
+  static create(val) {
+    if (val instanceof MalValue)
+      return new MalKeyword(val.value);
+    return new MalKeyword(val);
   }
 
   pr_str(print_readably = false) {
@@ -235,6 +245,7 @@ class MalAtom extends MalValue {
   }
 
   swap(fn, args) {
+    console.log({args});
     this.value = fn.apply(null, [this.value, ...args]);
     return this.value;
   }

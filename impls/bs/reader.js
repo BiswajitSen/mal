@@ -20,8 +20,7 @@ class Reader {
 const tokenize = (str) => {
   const re = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/g;
   return [...str.matchAll(re)].map(x => x[1])
-    .filter((token) => token !== "" || token !== " ")
-    .filter(y => !y.startsWith(';')).filter(y => y !== '');
+    .filter(y => !y.startsWith(';')).filter(y => y !== '' || y !== ' ');
 }
 
 const read_atom = (reader) => {
@@ -57,7 +56,7 @@ const read_atom = (reader) => {
   }
 
   if (token.startsWith('"')) throw "unbalanced";
-  
+
   return new MalSymbol(token);
 }
 
