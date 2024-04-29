@@ -47,8 +47,8 @@ const read_atom = (reader) => {
     return new MalKeyword(token.slice(1));
   }
 
-  if (token.match(/^"(?:\\.|[^\\"])*"$/)) {
-    let str = token.slice(1, token.length - 1).replace(/\\(.)/g, function (_, c) {
+  if (token.match(/^"(\\.|[^\\"])*"$/)) {
+    const str = token.slice(1, token.length - 1).replace(/\\(.)/g, function (_, c) {
       return c === "n" ? "\n" : c
     });
 
